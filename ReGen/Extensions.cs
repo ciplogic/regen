@@ -1,26 +1,24 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace ReGen
 {
-    static class Extensions
+    internal static class Extensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int IndexOf(this byte[] line, char ch, int startPos)
         {
             for (var i = startPos; i < line.Length; i++)
-            {
                 if (line[i] == ch)
                     return i;
-            }
 
             return -1;
         }
+
         public static byte[] Substring(this byte[] line, int startPos, int length = -1)
         {
-            if (length == -1)
-            {
-                length = line.Length - startPos;
-            }
+            if (length == -1) length = line.Length - startPos;
 
             var result = new byte[length];
             Array.Copy(line, startPos, result, 0, length);
@@ -33,7 +31,7 @@ namespace ReGen
             start.Start();
             action();
             start.Stop();
-            Console.WriteLine($"{message}: {(start.ElapsedMilliseconds/1000.0)} s");
+            Console.WriteLine($"{message}: {start.ElapsedMilliseconds / 1000.0} s");
         }
     }
 }

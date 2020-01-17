@@ -5,12 +5,12 @@ namespace ReGen.ReadWrite
 {
     public class StringScanner
     {
-        
-        private byte[] _line;
         private int _end;
-        Encoding encoder = Encoding.ASCII;
 
-        public StringScanner(byte[]line)
+        private readonly byte[] _line;
+        private readonly Encoding _encoder = Encoding.ASCII;
+
+        public StringScanner(byte[] line)
         {
             _line = line;
         }
@@ -26,7 +26,7 @@ namespace ReGen.ReadWrite
             _end = end;
         }
 
-        public byte[] doSlice()
+        public byte[] DoSlice()
         {
             var endIndex = _line.IndexOf('\t', Pos);
             if (endIndex == -1)
@@ -38,16 +38,31 @@ namespace ReGen.ReadWrite
             var result = _line.Substring(Pos, endIndex - Pos);
             Pos = endIndex + 1;
             return result;
-        }      
-        public string doSliceStr()
-        {
-
-            return encoder.GetString(doSlice());
         }
 
-        public int doInt()
+        public (byte[]line, int start, int len) DoSliceStruct()
         {
-            int result = 0;
+            var endIndex = _line.IndexOf('\t', Pos);
+            if (endIndex == -1)
+            {
+                Pos = _line.Length;
+                return (_line, Pos, _line.Length - Pos);
+            }
+
+            var oldPos = Pos;
+            var oldLen = endIndex - Pos;
+            Pos = endIndex + 1;
+            return (_line, oldPos, oldLen);
+        }
+
+        public string DoSliceStr()
+        {
+            return _encoder.GetString(DoSlice());
+        }
+
+        public int DoInt()
+        {
+            var result = 0;
             var isNegative = false;
             if (_line[Pos] == '-')
             {
@@ -60,7 +75,7 @@ namespace ReGen.ReadWrite
                 var ch = _line[Pos++];
                 if (ch == '\t')
                     return isNegative ? -result : result;
-                int digit = ch - '0';
+                var digit = ch - '0';
                 result = result * 10 + digit;
             }
         }
@@ -68,9 +83,9 @@ namespace ReGen.ReadWrite
         public override string ToString()
         {
             var resultData = new List<byte>();
-            for(var i = Pos; i<_end; ++i)
+            for (var i = Pos; i < _end; ++i)
                 resultData.Add(_line[i]);
-            return encoder.GetString(resultData.ToArray());
+            return _encoder.GetString(resultData.ToArray());
         }
     }
 }

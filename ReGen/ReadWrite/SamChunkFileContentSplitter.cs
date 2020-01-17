@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace ReGen.ReadWrite
 {
-    class SamChunkFileContentSplitter
+    internal class SamChunkFileContentSplitter
     {
         private readonly byte[] _data;
         private readonly List<string> _headers;
-        private List<int> _eolnIndices;
-        private StringScanner _scanner;
+        private readonly List<int> _eolnIndices;
+        private readonly StringScanner _scanner;
 
         public SamChunkFileContentSplitter(byte[] data, List<string> headers)
         {
@@ -23,12 +23,12 @@ namespace ReGen.ReadWrite
             if (len > _data.Length)
                 throw new InvalidOperationException("Index out of bounds");
             _eolnIndices.Clear();
-            int index = 0;
+            var index = 0;
             do
             {
                 var start = index;
                 index = _data.IndexOf('\n', index);
-                if (index == -1 || index>len)
+                if (index == -1 || index > len)
                     break;
                 _scanner.SetText(start, index);
                 if (_scanner.IsHeader)
@@ -37,14 +37,10 @@ namespace ReGen.ReadWrite
                 }
                 else
                 {
-                    if (start != 0)
-                    {
-                        onRowAction(_scanner);
-                    }
+                    if (start != 0) onRowAction(_scanner);
                 }
 
                 _eolnIndices.Add(index++);
-
             } while (true);
 
             return _eolnIndices.Count;

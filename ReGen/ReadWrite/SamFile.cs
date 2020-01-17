@@ -3,9 +3,9 @@ using System.IO;
 
 namespace ReGen.ReadWrite
 {
-    class SamFile : IDisposable
+    internal class SamFile : IDisposable
     {
-        private FileStream _stream;
+        private readonly FileStream _stream;
 
         public SamFile(string fileName)
         {
@@ -27,11 +27,12 @@ namespace ReGen.ReadWrite
             frameReader.FrameLengths.Clear();
             for (var i = 0; i < batchSize; i++)
             {
-                var readLen = _stream.Read(frameReader.Frames[i],0, frameSize);
+                var readLen = _stream.Read(frameReader.Frames[i], 0, frameSize);
                 frameReader.FrameLengths.Add(readLen);
-                if (readLen!=frameSize)
-                    return false; 
+                if (readLen != frameSize)
+                    return false;
             }
+
             return true;
         }
     }

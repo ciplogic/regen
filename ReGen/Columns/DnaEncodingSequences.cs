@@ -1,39 +1,74 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace ReGen.Columns
 {
-    class DnaEncodingSequences
+    internal class DnaEncodingSequences
     {
-        readonly List<long> _fullSequences;
-        readonly List<int> _lengths;
+        private readonly List<long> _fullSequences;
+        private readonly List<short> _lengths;
+        private readonly List<int> _starts;
+        private byte[] _table = new byte[20];
 
         public DnaEncodingSequences(int expectedLength)
         {
             _fullSequences = new List<long>(expectedLength);
-            _lengths = new List<int>(expectedLength);
+            _starts = new List<int>(expectedLength);
+            _lengths = new List<short>(expectedLength);
+            _table['C' - 'A'] = 1;
+            _table['G' - 'A'] = 2;
+            _table['T' - 'A'] = 3;
+            _table['N' - 'A'] = 4;
+        }
+
+        public IEnumerable<string> Sequences
+        {
+            get
+            {
+                var seqList = new List<long>();
+                for (var index = 0; index < _starts.Count; index++)
+                {
+                    seqList.Clear();
+                    var start = _starts[index];
+                    var length = _starts[index];
+                    var fullSequencesCount = _fullSequences.Count;
+
+                    for (var i = 0; i < length / 21 + 1; i++)
+                        if (start + i < fullSequencesCount)
+                            seqList.Add(_fullSequences[start + i]);
+                    yield return DecodeSequence(seqList.ToArray(), length);
+                }
+            }
         }
 
         public void Shrink()
         {
             _fullSequences.TrimExcess();
+            _starts.TrimExcess();
             _lengths.TrimExcess();
+            _table = null;
         }
 
-        static long CharLetterEncode(byte ch)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private long CharLetterEncode(byte ch)
         {
-            switch ((char)ch)
+            return _table[ch - 'A'];
+            /*switch ((char)ch)
             {
+                case 'A': return 0;
                 case 'C': return 1;
                 case 'G': return 2;
                 case 'T': return 3;
                 case 'N': return 4;
-                default:
-                    return 0;
             }
+
+            return 0;*/
         }
-        static char CharLetterDecode(int ch)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static char CharLetterDecode(int ch)
         {
             switch (ch)
             {
@@ -47,40 +82,81 @@ namespace ReGen.Columns
             }
         }
 
-        static int roundUpValue(int value, int divBase){
-            var rem = value% divBase;
+        private static int RoundUpValue(int value, int divBase)
+        {
+            var rem = value % divBase;
             var div = value / divBase;
-            if (rem==0)
+            if (rem == 0)
                 return value;
-            return (div+1)*divBase;
+            return (div + 1) * divBase;
         }
-        public static long[] EncodeSequence(byte[] sequence)
+
+        public long[] EncodeSequence(byte[] sequence)
+        {
+            var clearSequence = sequence.IndexOf('N', 0) == -1;
+            _lengths.Add((short) (clearSequence ? sequence.Length : -sequence.Length));
+
+            if (clearSequence) return EncodeCleanSequence(sequence);
+
+            return ExtractUncleanSequence(sequence);
+        }
+
+        private long[] ExtractUncleanSequence(byte[] sequence)
         {
             var sequenceLength = sequence.Length;
-            var result = new List<long>(sequenceLength/21+1);
+            var result = new long[sequenceLength / 21 + 1];
+            var pos = 0;
             long combinedCode = 0;
+            var bigShift = (long) 1 << 60;
+
+            var shifter = bigShift;
             for (var index = 0; index < sequenceLength; index++)
             {
                 var dnaLetter = sequence[index];
-                var remainder = index % 21; //16 letters fit in a 32 bit uint
-                if (remainder == 0)
+                if (shifter == 0)
                 {
-                    if (result.Count != 0)
-                    {
-                        result[result.Count-1] = combinedCode;
-                    }
-                    result.Add(0);
+                    result[pos++] = combinedCode;
                     combinedCode = 0;
+                    shifter = bigShift;
                 }
 
                 var encodedLetter = CharLetterEncode(dnaLetter);
-                combinedCode += encodedLetter << (remainder * 3);
+                combinedCode += encodedLetter * shifter;
+                shifter >>= 3;
             }
 
-            result[result.Count-1] = combinedCode;
-            var encodeSequence = result.ToArray();
-            Debug.Assert(ASCIIEncoding.ASCII.GetString(sequence) == DecodeSequence(encodeSequence, sequenceLength));
-            return encodeSequence;
+            result[pos++] = combinedCode;
+            Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
+            return result;
+        }
+
+        private long[] EncodeCleanSequence(byte[] sequence)
+        {
+            var sequenceLength = sequence.Length;
+            var result = new long[sequenceLength / 32 + 1];
+            var pos = 0;
+            long combinedCode = 0;
+            var bigShift = (long) 1 << 62;
+
+            var shifter = bigShift;
+            for (var index = 0; index < sequenceLength; index++)
+            {
+                var dnaLetter = sequence[index];
+                if (shifter == 0)
+                {
+                    result[pos++] = combinedCode;
+                    combinedCode = 0;
+                    shifter = bigShift;
+                }
+
+                var encodedLetter = CharLetterEncode(dnaLetter);
+                combinedCode += encodedLetter * shifter;
+                shifter >>= 2;
+            }
+
+            result[pos++] = combinedCode;
+            Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
+            return result;
         }
 
         public static string DecodeSequence(long[] input, int length)
@@ -91,46 +167,19 @@ namespace ReGen.Columns
                 var divide = i / 21;
                 var remainderIndex = i % 21;
                 var charSeq = input[divide];
-                var charShifted = (int)(charSeq >> (remainderIndex * 3)) & 7;
+                var charShifted = (int) (charSeq >> (remainderIndex * 3)) & 7;
                 var charDecoded = CharLetterDecode(charShifted);
                 sb.Append(charDecoded);
             }
+
             return sb.ToString();
         }
 
         public void Add(byte[] seqText)
         {
+            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
             var encoded = EncodeSequence(seqText);
             _fullSequences.AddRange(encoded);
-            var startIndex = 0;
-            if (_lengths.Count!=0){
-                startIndex = roundUpValue(_lengths[_lengths.Count-1], 21);
-            }
-            _lengths.Add(startIndex+seqText.Length);
-        }
-
-        public IEnumerable<string> Sequences
-        {
-            get
-            {
-                var seqList = new List<long>();
-                for (var index = 0; index < _lengths.Count; index++)
-                {
-                    seqList.Clear();
-                    var start = _lengths[index];
-                    var length = _lengths[index];
-                    var fullSequencesCount = _fullSequences.Count;
-
-                    for (var i = 0; i < length/21+1; i++)
-                    {
-                        if (start + i < fullSequencesCount)
-                        {
-                            seqList.Add(_fullSequences[start+i]);
-                        }
-                    }
-                    yield return DecodeSequence(seqList.ToArray(), length);
-                }
-            }
         }
     }
 }

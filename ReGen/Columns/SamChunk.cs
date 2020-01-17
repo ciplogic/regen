@@ -3,61 +3,61 @@ using ReGen.ReadWrite;
 
 namespace ReGen.Columns
 {
-    class SamChunk
+    internal class SamChunk
     {
-          
-        StringSequence QNAME;
-        List<char> FLAG;
-        DeduplicatedDictionary RNAME;
-        List<int> POS;
-        internal List<byte> MAPQ;
-        internal DeduplicatedDictionary CIGAR;
-        internal DeduplicatedDictionary RNEXT;
-        internal List<int> PNEXT ;
-        internal List<int> TLEN;
+        internal DeduplicatedDictionary Cigar;
         internal DnaEncodingSequences EncodingSequences;
-        internal StringSequence QUAL;
-        
+        private readonly List<char> _flag;
+        internal List<byte> Mapq;
+        internal List<int> Pnext;
+        private readonly List<int> _pos;
+
+        private readonly StringSequence _qname;
+        internal StringSequence Qual;
+        private readonly DeduplicatedDictionary _rname;
+        internal DeduplicatedDictionary Rnext;
+        internal List<int> Tlen;
+
         public SamChunk(int expectedLength)
         {
-            QNAME = new StringSequence();
-            FLAG = new List<char>(expectedLength);
-            RNAME = new DeduplicatedDictionary();
-            POS = new List<int>(expectedLength);
-            MAPQ = new List<byte>(expectedLength);
+            _qname = new StringSequence();
+            _flag = new List<char>(expectedLength);
+            _rname = new DeduplicatedDictionary();
+            _pos = new List<int>(expectedLength);
+            Mapq = new List<byte>(expectedLength);
 
-            CIGAR = new DeduplicatedDictionary();
-            RNEXT = new DeduplicatedDictionary();
-            PNEXT = new List<int>(expectedLength);
-            TLEN = new List<int>(expectedLength);
+            Cigar = new DeduplicatedDictionary();
+            Rnext = new DeduplicatedDictionary();
+            Pnext = new List<int>(expectedLength);
+            Tlen = new List<int>(expectedLength);
             EncodingSequences = new DnaEncodingSequences(expectedLength);
-            QUAL = new StringSequence();
+            Qual = new StringSequence();
         }
 
         public void Shrink()
         {
-            QNAME.shrink();
-            QUAL.shrink();
+            _qname.Shrink();
+            Qual.Shrink();
             EncodingSequences.Shrink();
-            CIGAR.shrink();
-            RNEXT.shrink();
+            Cigar.Shrink();
+            Rnext.Shrink();
         }
 
         public void ReadRow(StringScanner sc)
         {
-            QNAME.Add((sc.doSlice()));
-            FLAG.Add((char) sc.doInt());
-            RNAME.Add(sc.doSliceStr());
+            _qname.Add(sc.DoSliceStruct());
+            _flag.Add((char) sc.DoInt());
+            _rname.Add(sc.DoSliceStr());
 
-            POS.Add(sc.doInt());
-            MAPQ.Add((byte) sc.doInt());
-            CIGAR.Add(sc.doSliceStr());
-            RNEXT.Add(sc.doSliceStr());
-            PNEXT.Add(sc.doInt());
-            TLEN.Add(sc.doInt());
-            var seqText = sc.doSlice();
+            _pos.Add(sc.DoInt());
+            Mapq.Add((byte) sc.DoInt());
+            Cigar.Add(sc.DoSliceStr());
+            Rnext.Add(sc.DoSliceStr());
+            Pnext.Add(sc.DoInt());
+            Tlen.Add(sc.DoInt());
+            var seqText = sc.DoSlice();
             EncodingSequences.Add(seqText);
-            QUAL.Add(sc.doSlice());
+            Qual.Add(sc.DoSliceStruct());
         }
     }
 }

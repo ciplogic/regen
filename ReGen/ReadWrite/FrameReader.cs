@@ -4,18 +4,15 @@ using ReGen.Columns;
 
 namespace ReGen.ReadWrite
 {
-    class FrameReader
+    internal class FrameReader
     {
-        public int FrameSize { get; }
-        public int BatchSize { get; set; }
-        public byte[][] Frames { get; }
         public SamChunkFileContentSplitter[] Splitters;
-        public List<int> FrameLengths { get; }
+
         public FrameReader(int frameSize, int batchSize, List<string> headers)
         {
             FrameSize = frameSize;
-            BatchSize  = batchSize;
-            FrameLengths =new List<int>(batchSize);
+            BatchSize = batchSize;
+            FrameLengths = new List<int>(batchSize);
             Frames = new byte [batchSize][];
             Splitters = new SamChunkFileContentSplitter[batchSize];
             for (var i = 0; i < batchSize; i++)
@@ -24,6 +21,11 @@ namespace ReGen.ReadWrite
                 Splitters[i] = new SamChunkFileContentSplitter(Frames[i], headers);
             }
         }
+
+        public int FrameSize { get; }
+        public int BatchSize { get; set; }
+        public byte[][] Frames { get; }
+        public List<int> FrameLengths { get; }
 
         public void MarkSplitFrames(List<SamChunk> chunks)
         {
@@ -43,14 +45,13 @@ namespace ReGen.ReadWrite
                     chunk.Shrink();
                     lock (chunks)
                     {
-                        chunks.Add(chunk);
+                        // chunks.Add(chunk);
                     }
+
                     // return false;
                 })
                 ;
-                // .ToArray();
+            // .ToArray();
         }
-        
-
     }
 }
