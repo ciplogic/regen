@@ -13,6 +13,10 @@ namespace ReGen.Columns
             var last = _items.Count > 0 ? _items[_items.Count - 1] : 0;
             _items.Add(last + str.Length);
         }
+        public void AddFromChunk(SamChunk chunk, int i)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public void Shrink()
         {
@@ -26,5 +30,6 @@ namespace ReGen.Columns
             var len = sliceStruct.len;
             for (var i = 0; i < len; i++) _stringBuilder.Add(line[start + i]);
         }
+
     }
 }

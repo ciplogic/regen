@@ -3,27 +3,27 @@ using ReGen.ReadWrite;
 
 namespace ReGen.Columns
 {
-    internal class SamChunk
+    public class SamChunk
     {
         internal DeduplicatedDictionary Cigar;
         internal DnaEncodingSequences EncodingSequences;
-        private readonly List<char> _flag;
+        internal readonly List<char> Flag;
         internal List<byte> Mapq;
         internal List<int> Pnext;
-        private readonly List<int> _pos;
+        internal readonly List<int> Pos;
 
-        private readonly StringSequence _qname;
+        internal readonly StringSequence Qname;
         internal StringSequence Qual;
-        private readonly DeduplicatedDictionary _rname;
+        internal readonly DeduplicatedDictionary Rname;
         internal DeduplicatedDictionary Rnext;
         internal List<int> Tlen;
 
         public SamChunk(int expectedLength)
         {
-            _qname = new StringSequence();
-            _flag = new List<char>(expectedLength);
-            _rname = new DeduplicatedDictionary();
-            _pos = new List<int>(expectedLength);
+            Qname = new StringSequence();
+            Flag = new List<char>(expectedLength);
+            Rname = new DeduplicatedDictionary();
+            Pos = new List<int>(expectedLength);
             Mapq = new List<byte>(expectedLength);
 
             Cigar = new DeduplicatedDictionary();
@@ -34,9 +34,11 @@ namespace ReGen.Columns
             Qual = new StringSequence();
         }
 
+        public int Count => Flag.Count;
+
         public void Shrink()
         {
-            _qname.Shrink();
+            Qname.Shrink();
             Qual.Shrink();
             EncodingSequences.Shrink();
             Cigar.Shrink();
@@ -45,11 +47,11 @@ namespace ReGen.Columns
 
         public void ReadRow(StringScanner sc)
         {
-            _qname.Add(sc.DoSliceStruct());
-            _flag.Add((char) sc.DoInt());
-            _rname.Add(sc.DoSliceStr());
+            Qname.Add(sc.DoSliceStruct());
+            Flag.Add((char) sc.DoInt());
+            Rname.Add(sc.DoSliceStr());
 
-            _pos.Add(sc.DoInt());
+            Pos.Add(sc.DoInt());
             Mapq.Add((byte) sc.DoInt());
             Cigar.Add(sc.DoSliceStr());
             Rnext.Add(sc.DoSliceStr());
@@ -58,6 +60,11 @@ namespace ReGen.Columns
             var seqText = sc.DoSlice();
             EncodingSequences.Add(seqText);
             Qual.Add(sc.DoSliceStruct());
+        }
+
+        public void CopyItem(SamChunk chunk, int i)
+        {
+            Qname.AddFromChunk(chunk, i);
         }
     }
 }

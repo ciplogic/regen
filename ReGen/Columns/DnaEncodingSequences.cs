@@ -126,7 +126,7 @@ namespace ReGen.Columns
             }
 
             result[pos++] = combinedCode;
-            Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
+            // Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
             return result;
         }
 
@@ -155,7 +155,7 @@ namespace ReGen.Columns
             }
 
             result[pos++] = combinedCode;
-            Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
+            //Debug.Assert(Encoding.ASCII.GetString(sequence) == DecodeSequence(result, sequenceLength));
             return result;
         }
 

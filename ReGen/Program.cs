@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ReGen.Algorithms;
+using ReGen.Algorithms.Sorting;
 using ReGen.Columns;
 using ReGen.ReadWrite;
 
@@ -10,18 +12,26 @@ namespace ReGen
     {
         private static void Main(string[] args)
         {
-            var fileName = @"D:\paper\1_2GB.sam";
+            var fileName = @"g:\paper\1_2GB.sam";
             // var fileName = @"c:\paper\input_8G.sam";
             Extensions.TimeIt("Total", () =>
             {
                 for (var i = 0; i < 10; i++)
                 {
                     var headers = new List<string>();
-                    Extensions.TimeIt("Reading", () =>
+                    Extensions.TimeIt("Total time", () =>
                     {
                         var chunks = new List<SamChunk>();
-                        using var samFile = new SamFile(fileName);
-                        FrameReader(samFile, chunks, headers);
+                        Extensions.TimeIt("Reading", () =>
+                        {
+                            using var samFile = new SamFile(fileName);
+                            FrameReader(samFile, chunks, headers);
+                        });
+                        Extensions.TimeIt("Sorting", () =>
+                        {
+                            var sorter = new SamChunkSorter(chunks);
+                            sorter.Sort();
+                        });
                         Console.WriteLine("Count chunks: " + chunks.Count);
                     });
                 }
@@ -40,8 +50,8 @@ namespace ReGen
                 tasks[0] = () => { canRead = samFile.ReadIntoFrame(backFrame); };
                 tasks[1] = () => { frontFrame.MarkSplitFrames(chunks); };
                 tasks
-                    // .Select(a =>{a();return false;}).ToArray();
-                    .AsParallel().ForAll(action => action());
+                    .Select(a =>{a();return false;}).ToArray();
+                    // .AsParallel().ForAll(action => action());
                 frontFrame = backFrame;
                 backFrame = frame;
                 frame = frontFrame;
