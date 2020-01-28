@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -14,6 +15,28 @@ namespace ReGen
                     return i;
 
             return -1;
+        }
+
+        public static void ForEach<T>(this IEnumerable<T> items, Action<T> action)
+        {
+            foreach (var item in items)
+            {
+                action(item);
+            }
+        }
+        public static void ForEach<T>(this T[] items, Action<T> action)
+        {
+            foreach (var item in items)
+            {
+                action(item);
+            }
+        }
+        public static void ForEach<T>(this IList<T> items, Action<T> action)
+        {
+            foreach (var item in items)
+            {
+                action(item);
+            }
         }
 
         public static byte[] Substring(this byte[] line, int startPos, int length = -1)

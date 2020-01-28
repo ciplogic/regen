@@ -36,6 +36,11 @@ namespace ReGen.Columns
 
         public int Count => Flag.Count;
 
+        public override string ToString()
+        {
+            return "" + Count;
+        }
+
         public void Shrink()
         {
             Qname.Shrink();
@@ -64,7 +69,7 @@ namespace ReGen.Columns
 
         public void CopyItem(SamChunk chunk, int i)
         {
-            Qname.AddFromChunk(chunk, i);
+            Qname.AddFromChunk(chunk.Qname, i);
             Flag.Add(chunk.Flag[i]);
             
             Rname.Add(chunk.Rname.GetValueByIndex(i));
@@ -75,8 +80,8 @@ namespace ReGen.Columns
             Rnext.Add(chunk.Rnext.GetValueByIndex(i));
             Pnext.Add(chunk.Pnext[i]);
             Tlen.Add(chunk.Tlen[i]);
-            EncodingSequences.AddFromChunk(chunk, i);
-            Qual.AddFromChunk(chunk, i);
+            EncodingSequences.AddFromChunk(chunk.EncodingSequences, i);
+            Qual.AddFromChunk(chunk.Qname, i);
         }
     }
 }

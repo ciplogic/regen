@@ -28,11 +28,17 @@ namespace ReGen
                             FrameReader(samFile, chunks, headers);
                         });
                         GC.Collect(2);
+                        Extensions.TimeIt("Filtering", () =>
+                        {
+                            var readUnmapped = new RemoveUnmappedReads(chunks);
+                            var newSeq = readUnmapped.Apply();
+                        });
+                        /*
                         Extensions.TimeIt("Sorting", () =>
                         {
                             var sorter = new SamChunkSorter(chunks);
                             sorter.Sort();
-                        });
+                        });*/
                         Console.WriteLine("Count chunks: " + chunks.Count);
                     });
                 }

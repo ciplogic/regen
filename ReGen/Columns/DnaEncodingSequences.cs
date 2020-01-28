@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -91,13 +90,14 @@ namespace ReGen.Columns
             return ExtractNotCleanSequence(sequence);
         }
 
-        int LengthOfCleanSequence(int sequenceLength)
+        static int LengthOfCleanSequence(int sequenceLength)
         {
             if (sequenceLength == 0)
                 return 0;
             return ((sequenceLength-1) / 32) + 1;
         }
-        int LengthOfNotCleanSequence(int sequenceLength)
+
+        static int LengthOfNotCleanSequence(int sequenceLength)
         {
             if (sequenceLength == 0)
                 return 0;
@@ -182,14 +182,28 @@ namespace ReGen.Columns
 
         public void Add(byte[] seqText)
         {
-            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
             var encoded = EncodeSequence(seqText);
+            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
             _fullSequences.AddRange(encoded);
         }
 
-        public void AddFromChunk(SamChunk chunk, in int i)
+        public void AddFromChunk(DnaEncodingSequences src, in int i)
         {
-            throw new System.NotImplementedException();
+            short srcLen = src._lengths[i];
+            int len = LengthOfCleanSequence(srcLen);
+            int start = src._starts[i];
+            List<long> fullSeq = src._fullSequences;
+            for (var idx = 0; idx < len; idx++)
+            {
+                _fullSequences.Add(fullSeq[start+idx]);
+            }
+            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
+            _lengths.Add(srcLen);
+        }
+
+        public short GetLength(int index)
+        {
+            return _lengths[index];
         }
     }
 }

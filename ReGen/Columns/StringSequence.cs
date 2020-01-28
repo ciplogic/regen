@@ -13,9 +13,11 @@ namespace ReGen.Columns
             var last = _items.Count > 0 ? _items[_items.Count - 1] : 0;
             _items.Add(last + str.Length);
         }
-        public void AddFromChunk(SamChunk chunk, int i)
+        public void AddFromChunk(StringSequence srcSeq, int i)
         {
-            throw new System.NotImplementedException();
+            var start = i == 0 ? 0 : srcSeq._items[i-1];
+            var len = srcSeq._items[i] - start;
+            Add((srcSeq._stringBuilder, start, len));
         }
 
         public void Shrink()
@@ -23,12 +25,17 @@ namespace ReGen.Columns
             _stringBuilder.TrimExcess();
         }
 
-        public void Add((byte[] line, int start, int len) sliceStruct)
+        public void Add((IList<byte> line, int start, int len) sliceStruct)
         {
             var line = sliceStruct.line;
             var start = sliceStruct.start;
             var len = sliceStruct.len;
-            for (var i = 0; i < len; i++) _stringBuilder.Add(line[start + i]);
+            for (var i = 0; i < len; i++)
+            {
+                _stringBuilder.Add(line[start + i]);
+            }
+            var last = _items.Count > 0 ? _items[_items.Count - 1] : 0;
+            _items.Add(last + len);
         }
 
     }

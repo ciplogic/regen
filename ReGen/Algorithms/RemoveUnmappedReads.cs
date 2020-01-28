@@ -1,47 +1,39 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using ReGen.Columns;
 
 namespace ReGen.Algorithms
 {
-    public class FilterChunks
+    class RemoveUnmappedReads
     {
-        private readonly SamChunk[] _chunks;
-        private readonly Func<SamChunk, int, bool> _filter;
+        private readonly IList<SamChunk> _chunks;
 
-        public FilterChunks(SamChunk[] chunks, Func<SamChunk, int, bool> filter)
+        public RemoveUnmappedReads(IList<SamChunk> chunks)
         {
             _chunks = chunks;
-            _filter = filter;
         }
 
         public SamChunk[] Apply()
         {
-            var results = new List<SamChunk>();
-
-            for (var i = 0; i < _chunks.Length; i++)
-            {
-                var currChunk = _chunks[i];
-                var item = new SamChunk(currChunk.Count);
-                ApplyFilterOnChunk(currChunk, item);
-
-
-            }
-
-            return results.ToArray();
-        }
-
-        private void ApplyFilterOnChunk(SamChunk currChunk, SamChunk item)
-        {
-            var count = currChunk.Count;
-            for (var i = 0; i < count; i++)
-            {
-                if (_filter(currChunk, i))
+            var newChunks = new SamChunk[_chunks.Count];
+            Enumerable.Range(0, newChunks.Length)
+                .AsParallel().ForAll(i =>
+                // .ForEach(i=>
                 {
-                    item.CopyItem(currChunk, i);
-                }
-            }
-            item.Shrink();
+                    var srcChunk = _chunks[i];
+                    var destChunk = new SamChunk(srcChunk.Count);
+                    newChunks[i] = destChunk;
+                    for (var idx = 0; idx < srcChunk.Count; idx++)
+                    {
+                        short seqLen = srcChunk.EncodingSequences.GetLength(idx);
+                        var isMapped = seqLen > 0;
+                        if (isMapped)
+                        {
+                            destChunk.CopyItem(srcChunk, idx);
+                        }
+                    }
+                });
+            return newChunks;
         }
     }
 }
