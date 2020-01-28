@@ -55,16 +55,6 @@ namespace ReGen.Columns
         private long CharLetterEncode(byte ch)
         {
             return _table[ch - 'A'];
-            /*switch ((char)ch)
-            {
-                case 'A': return 0;
-                case 'C': return 1;
-                case 'G': return 2;
-                case 'T': return 3;
-                case 'N': return 4;
-            }
-
-            return 0;*/
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,18 +83,32 @@ namespace ReGen.Columns
 
         public long[] EncodeSequence(byte[] sequence)
         {
-            var clearSequence = sequence.IndexOf('N', 0) == -1;
-            _lengths.Add((short) (clearSequence ? sequence.Length : -sequence.Length));
+            var sequenceIsClean = sequence.IndexOf('N', 0) == -1;
+            _lengths.Add((short) (sequenceIsClean ? sequence.Length : -sequence.Length));
 
-            if (clearSequence) return EncodeCleanSequence(sequence);
+            if (sequenceIsClean) return EncodeCleanSequence(sequence);
 
-            return ExtractUncleanSequence(sequence);
+            return ExtractNotCleanSequence(sequence);
         }
 
-        private long[] ExtractUncleanSequence(byte[] sequence)
+        int LengthOfCleanSequence(int sequenceLength)
+        {
+            if (sequenceLength == 0)
+                return 0;
+            return ((sequenceLength-1) / 32) + 1;
+        }
+        int LengthOfNotCleanSequence(int sequenceLength)
+        {
+            if (sequenceLength == 0)
+                return 0;
+            return ((sequenceLength-1) / 21) + 1;
+        }
+
+        private long[] ExtractNotCleanSequence(byte[] sequence)
         {
             var sequenceLength = sequence.Length;
-            var result = new long[sequenceLength / 21 + 1];
+            var len = LengthOfNotCleanSequence(sequenceLength);
+            var result = new long[len];
             var pos = 0;
             long combinedCode = 0;
             var bigShift = (long) 1 << 60;
@@ -133,7 +137,8 @@ namespace ReGen.Columns
         private long[] EncodeCleanSequence(byte[] sequence)
         {
             var sequenceLength = sequence.Length;
-            var result = new long[sequenceLength / 32 + 1];
+            var len = LengthOfCleanSequence(sequenceLength);
+            var result = new long[len];
             var pos = 0;
             long combinedCode = 0;
             var bigShift = (long) 1 << 62;
@@ -180,6 +185,11 @@ namespace ReGen.Columns
             _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
             var encoded = EncodeSequence(seqText);
             _fullSequences.AddRange(encoded);
+        }
+
+        public void AddFromChunk(SamChunk chunk, in int i)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

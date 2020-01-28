@@ -65,6 +65,18 @@ namespace ReGen.Columns
         public void CopyItem(SamChunk chunk, int i)
         {
             Qname.AddFromChunk(chunk, i);
+            Flag.Add(chunk.Flag[i]);
+            
+            Rname.Add(chunk.Rname.GetValueByIndex(i));
+
+            Pos.Add(chunk.Pos[i]);
+            Mapq.Add(chunk.Mapq[i]);
+            Cigar.Add(chunk.Cigar.GetValueByIndex(i));
+            Rnext.Add(chunk.Rnext.GetValueByIndex(i));
+            Pnext.Add(chunk.Pnext[i]);
+            Tlen.Add(chunk.Tlen[i]);
+            EncodingSequences.AddFromChunk(chunk, i);
+            Qual.AddFromChunk(chunk, i);
         }
     }
 }

@@ -27,6 +27,7 @@ namespace ReGen
                             using var samFile = new SamFile(fileName);
                             FrameReader(samFile, chunks, headers);
                         });
+                        GC.Collect(2);
                         Extensions.TimeIt("Sorting", () =>
                         {
                             var sorter = new SamChunkSorter(chunks);
@@ -49,9 +50,12 @@ namespace ReGen
                 var tasks = new Action[2];
                 tasks[0] = () => { canRead = samFile.ReadIntoFrame(backFrame); };
                 tasks[1] = () => { frontFrame.MarkSplitFrames(chunks); };
-                tasks
-                    .Select(a =>{a();return false;}).ToArray();
-                    // .AsParallel().ForAll(action => action());
+                tasks.
+                #if SEQUENTIAL
+                    Select(a =>{a();return false;}).ToArray();
+                    #else
+                    AsParallel().ForAll(action => action());
+                #endif
                 frontFrame = backFrame;
                 backFrame = frame;
                 frame = frontFrame;

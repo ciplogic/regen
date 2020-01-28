@@ -36,10 +36,13 @@ namespace ReGen.ReadWrite
                 frameDataShared[i] = item;
             }
 
-            frameDataShared
-                // .AsParallel().ForAll(it =>
-                    .Select(it=>
-                {
+            frameDataShared.
+            #if SEQUENTIAL
+                Select(
+            #else
+                AsParallel().ForAll(
+            #endif
+                    it =>{
                     var chunk = new SamChunk(20000);
                     it.splitter.IndexEoln(it.len, scanner => { chunk.ReadRow(scanner); });
                     chunk.Shrink();
@@ -48,10 +51,15 @@ namespace ReGen.ReadWrite
                         chunks.Add(chunk);
                     }
 
-                    return false;
+            #if SEQUENTIAL
+                     return false;
+            #endif
                 })
-                // ;
-            .ToArray();
+            #if SEQUENTIAL
+                .ToArray();
+            #else
+                ;
+            #endif
         }
     }
 }

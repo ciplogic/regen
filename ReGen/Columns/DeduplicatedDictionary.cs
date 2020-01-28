@@ -36,5 +36,10 @@ namespace ReGen.Columns
             Indices.TrimExcess();
             _table.TrimExcess();
         }
+
+        public string GetValueByIndex(in int i)
+        {
+            return Values[Indices[i]];
+        }
     }
 }
