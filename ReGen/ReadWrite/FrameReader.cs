@@ -43,7 +43,7 @@ namespace ReGen.ReadWrite
                 AsParallel().ForAll(
             #endif
                     it =>{
-                    var chunk = new SamChunk(20000);
+                    var chunk = new SamChunk(Extensions.PartitionSize);
                     it.splitter.IndexEoln(it.len, scanner => { chunk.ReadRow(scanner); });
                     chunk.Shrink();
                     lock (chunks)

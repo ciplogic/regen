@@ -32,6 +32,7 @@ namespace ReGen.Algorithms
                             destChunk.CopyItem(srcChunk, idx);
                         }
                     }
+                    destChunk.Shrink();
                 });
             return newChunks;
         }

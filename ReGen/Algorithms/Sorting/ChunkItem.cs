@@ -2,7 +2,7 @@ using ReGen.Columns;
 
 namespace ReGen.Algorithms.Sorting
 {
-    struct ChunkItem
+    public struct ChunkItem
     {
         public SamChunk Chunk;
         public int Index;

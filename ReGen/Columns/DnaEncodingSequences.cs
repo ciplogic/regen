@@ -6,15 +6,15 @@ namespace ReGen.Columns
 {
     internal class DnaEncodingSequences
     {
-        private readonly List<long> _fullSequences;
+        public  List<long> FullSequences { get; }
         private readonly List<short> _lengths;
-        private readonly List<int> _starts;
+        public List<int> Starts { get; }
         private byte[] _table = new byte[20];
 
         public DnaEncodingSequences(int expectedLength)
         {
-            _fullSequences = new List<long>(expectedLength);
-            _starts = new List<int>(expectedLength);
+            FullSequences = new List<long>(expectedLength);
+            Starts = new List<int>(expectedLength);
             _lengths = new List<short>(expectedLength);
             _table['C' - 'A'] = 1;
             _table['G' - 'A'] = 2;
@@ -22,30 +22,10 @@ namespace ReGen.Columns
             _table['N' - 'A'] = 4;
         }
 
-        public IEnumerable<string> Sequences
-        {
-            get
-            {
-                var seqList = new List<long>();
-                for (var index = 0; index < _starts.Count; index++)
-                {
-                    seqList.Clear();
-                    var start = _starts[index];
-                    var length = _starts[index];
-                    var fullSequencesCount = _fullSequences.Count;
-
-                    for (var i = 0; i < length / 21 + 1; i++)
-                        if (start + i < fullSequencesCount)
-                            seqList.Add(_fullSequences[start + i]);
-                    yield return DecodeSequence(seqList.ToArray(), length);
-                }
-            }
-        }
-
         public void Shrink()
         {
-            _fullSequences.TrimExcess();
-            _starts.TrimExcess();
+            FullSequences.TrimExcess();
+            Starts.TrimExcess();
             _lengths.TrimExcess();
             _table = null;
         }
@@ -183,21 +163,21 @@ namespace ReGen.Columns
         public void Add(byte[] seqText)
         {
             var encoded = EncodeSequence(seqText);
-            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
-            _fullSequences.AddRange(encoded);
+            Starts.Add(Starts.Count == 0 ? 0 : FullSequences.Count);
+            FullSequences.AddRange(encoded);
         }
 
         public void AddFromChunk(DnaEncodingSequences src, in int i)
         {
             short srcLen = src._lengths[i];
             int len = LengthOfCleanSequence(srcLen);
-            int start = src._starts[i];
-            List<long> fullSeq = src._fullSequences;
+            int start = src.Starts[i];
+            List<long> fullSeq = src.FullSequences;
+            Starts.Add(Starts.Count == 0 ? 0 : FullSequences.Count);
             for (var idx = 0; idx < len; idx++)
             {
-                _fullSequences.Add(fullSeq[start+idx]);
+                FullSequences.Add(fullSeq[start+idx]);
             }
-            _starts.Add(_starts.Count == 0 ? 0 : _fullSequences.Count);
             _lengths.Add(srcLen);
         }
 

@@ -16,7 +16,7 @@ namespace ReGen
             // var fileName = @"c:\paper\input_8G.sam";
             Extensions.TimeIt("Total", () =>
             {
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 1; i++)
                 {
                     var headers = new List<string>();
                     Extensions.TimeIt("Total time", () =>
@@ -27,18 +27,26 @@ namespace ReGen
                             using var samFile = new SamFile(fileName);
                             FrameReader(samFile, chunks, headers);
                         });
-                        GC.Collect(2);
+                        SamChunk[] newSeq = null;
                         Extensions.TimeIt("Filtering", () =>
                         {
                             var readUnmapped = new RemoveUnmappedReads(chunks);
-                            var newSeq = readUnmapped.Apply();
+                            newSeq = readUnmapped.Apply();
+                            chunks.Clear();
                         });
-                        /*
-                        Extensions.TimeIt("Sorting", () =>
+                        
+                        // Extensions.TimeIt("Sorting", () =>
+                        // {
+                        //     var sorter = new SamChunkSorter(chunks);
+                        //     sorter.Sort();
+                        // });
+                        Extensions.TimeIt("Sorting Partitioned", () =>
                         {
-                            var sorter = new SamChunkSorter(chunks);
-                            sorter.Sort();
-                        });*/
+                            var sorter = new SamChunkPartitionSorter(newSeq);
+                            sorter.Apply();
+                            chunks.Clear();
+                            Console.WriteLine(sorter.Partitions.Length);
+                        });
                         Console.WriteLine("Count chunks: " + chunks.Count);
                     });
                 }
@@ -47,8 +55,8 @@ namespace ReGen
 
         private static void FrameReader(SamFile samFile, List<SamChunk> chunks, List<string> headers)
         {
-            var frontFrame = new FrameReader(350 * 20000, Environment.ProcessorCount, headers);
-            var backFrame = new FrameReader(350 * 20000, Environment.ProcessorCount, headers);
+            var frontFrame = new FrameReader(350 * Extensions.PartitionSize, Environment.ProcessorCount, headers);
+            var backFrame = new FrameReader(350 * Extensions.PartitionSize, Environment.ProcessorCount, headers);
             var frame = frontFrame;
             var canRead = samFile.ReadIntoFrame(frame);
             while (canRead)

@@ -7,6 +7,8 @@ namespace ReGen
 {
     internal static class Extensions
     {
+        public const int PartitionSize = 200;
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int IndexOf(this byte[] line, char ch, int startPos)
         {
